@@ -1,0 +1,772 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Gotham | Central de Inteligência</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #10151f;
+            color: #f1f5f9;
+            font-family: Arial, sans-serif;
+            padding: 30px;
+        }
+
+        header {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #303b4d;
+            padding-bottom: 20px;
+        }
+
+        header h1 {
+            color: #facc15;
+            font-size: 28px;
+        }
+
+        header p {
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+
+        .painel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: #1c2533;
+            border: 1px solid #303b4d;
+            border-radius: 12px;
+            padding: 22px;
+        }
+
+        .card h2 {
+            font-size: 16px;
+            color: #94a3b8;
+            margin-bottom: 18px;
+        }
+
+        #estado {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .ligado {
+            color: #22c55e;
+        }
+
+        .desligado {
+            color: #ef4444;
+        }
+
+        .sem-dados {
+            color: #facc15;
+        }
+
+        #horario {
+            color: #cbd5e1;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        /* CONTROLE DO BAT-SINAL */
+
+        .controle {
+            margin-bottom: 25px;
+        }
+
+        .botoes-controle {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .botoes-controle button {
+            padding: 13px 24px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        #botaoLigar {
+            background: #16a34a;
+        }
+
+        #botaoLigar:hover {
+            background: #15803d;
+        }
+
+        #botaoDesligar {
+            background: #dc2626;
+        }
+
+        #botaoDesligar:hover {
+            background: #b91c1c;
+        }
+
+        .botoes-controle button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #mensagemComando {
+            margin-top: 15px;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .grafico {
+            margin-bottom: 25px;
+        }
+
+        .grafico-container {
+            height: 320px;
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 13px;
+            text-align: left;
+            border-bottom: 1px solid #303b4d;
+        }
+
+        th {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        td {
+            font-size: 14px;
+        }
+
+        .rodape {
+            color: #64748b;
+            margin-top: 25px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+
+            header h1 {
+                font-size: 22px;
+            }
+
+            .grafico-container {
+                height: 250px;
+            }
+
+            .botoes-controle {
+                flex-direction: column;
+            }
+
+            .botoes-controle button {
+                width: 100%;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <header>
+        <h1>⚡ GOTHAM CITY</h1>
+        <p>Central de Inteligência | Monitoramento do Bat-Sinal</p>
+    </header>
+
+    <!-- PAINEL DE STATUS -->
+
+    <section class="painel">
+
+        <div class="card">
+            <h2>STATUS ATUAL DO BAT-SINAL</h2>
+
+            <div id="estado" class="sem-dados">
+                CARREGANDO...
+            </div>
+
+            <div id="horario">
+                Aguardando informações...
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>CONEXÃO COM O SERVIDOR WEB</h2>
+
+            <div id="conexao" class="sem-dados">
+                VERIFICANDO...
+            </div>
+
+            <div id="ultimaAtualizacao">
+                Aguardando consulta...
+            </div>
+        </div>
+
+    </section>
+
+    <!-- CONTROLE DO BAT-SINAL -->
+
+    <section class="card controle">
+
+        <h2>CONTROLE DO BAT-SINAL</h2>
+
+        <div class="botoes-controle">
+
+            <button
+                id="botaoLigar"
+                onclick="enviarComando('BAT_SIGNAL_ON')">
+                LIGAR BAT-SINAL
+            </button>
+
+            <button
+                id="botaoDesligar"
+                onclick="enviarComando('BAT_SIGNAL_OFF')">
+                DESLIGAR BAT-SINAL
+            </button>
+
+        </div>
+
+        <p id="mensagemComando">
+            Aguardando comando...
+        </p>
+
+    </section>
+
+    <!-- GRÁFICO -->
+
+    <section class="card grafico">
+
+        <h2>HISTÓRICO DO BAT-SINAL — ÚLTIMAS 24 HORAS</h2>
+
+        <div class="grafico-container">
+            <canvas id="grafico"></canvas>
+        </div>
+
+    </section>
+
+    <!-- REGISTRO DE EVENTOS -->
+
+    <section class="card">
+
+        <h2>REGISTRO DE EVENTOS</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ESTADO</th>
+                    <th>DATA E HORÁRIO</th>
+                </tr>
+            </thead>
+
+            <tbody id="eventos">
+                <tr>
+                    <td colspan="2">Carregando eventos...</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </section>
+
+    <div class="rodape">
+        PROJETO 3 — CENTRAL DE INTELIGÊNCIA DE GOTHAM
+    </div>
+
+    <script>
+
+        let grafico = null;
+
+        // Formata data e horário
+        function formatarData(data) {
+            return new Date(data).toLocaleString("pt-BR");
+        }
+
+
+        // Envia comandos para o NODE_B através do Flask
+        async function enviarComando(comando) {
+
+            const botaoLigar = document.getElementById("botaoLigar");
+            const botaoDesligar = document.getElementById("botaoDesligar");
+            const mensagem = document.getElementById("mensagemComando");
+
+            // Evita vários comandos simultâneos
+            botaoLigar.disabled = true;
+            botaoDesligar.disabled = true;
+
+            mensagem.textContent = "Enviando comando...";
+            mensagem.style.color = "#facc15";
+
+            try {
+
+                const resposta = await fetch("/api/comando", {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        comando: comando
+                    })
+
+                });
+
+                const resultado = await resposta.json();
+
+                if (!resposta.ok || !resultado.sucesso) {
+                    throw new Error(resultado.mensagem || "Falha ao enviar comando.");
+                }
+
+                if (comando === "BAT_SIGNAL_ON") {
+                    mensagem.textContent = "Comando de LIGAR enviado com sucesso!";
+                } else {
+                    mensagem.textContent = "Comando de DESLIGAR enviado com sucesso!";
+                }
+
+                mensagem.style.color = "#22c55e";
+
+                // Atualiza o Dashboard para consultar o novo estado
+                setTimeout(atualizarDashboard, 500);
+
+            } catch (erro) {
+
+                console.error("Erro ao enviar comando:", erro);
+
+                mensagem.textContent = "Erro: " + erro.message;
+                mensagem.style.color = "#ef4444";
+
+            } finally {
+
+                botaoLigar.disabled = false;
+                botaoDesligar.disabled = false;
+
+            }
+
+        }
+
+
+        // Atualiza todas as informações do Dashboard
+        async function atualizarDashboard() {
+
+            try {
+
+                const respostaStatus = await fetch(
+                    "/api/status",
+                    { cache: "no-store" }
+                );
+
+                if (!respostaStatus.ok) {
+                    throw new Error("Falha ao consultar status");
+                }
+
+                const status = await respostaStatus.json();
+
+                const estado = document.getElementById("estado");
+                const horario = document.getElementById("horario");
+
+                estado.className = "";
+
+                if (status.estado === "BAT_SIGNAL_ON") {
+
+                    estado.textContent = "LIGADO";
+                    estado.classList.add("ligado");
+
+                } else if (status.estado === "BAT_SIGNAL_OFF") {
+
+                    estado.textContent = "DESLIGADO";
+                    estado.classList.add("desligado");
+
+                } else {
+
+                    estado.textContent = "SEM DADOS";
+                    estado.classList.add("sem-dados");
+
+                }
+
+                horario.textContent = status.timestamp
+                    ? "Último evento: " + formatarData(status.timestamp)
+                    : "Nenhum evento registrado.";
+
+
+                // Indica que a API do Dashboard está respondendo
+                const conexao = document.getElementById("conexao");
+
+                conexao.textContent = "API DISPONÍVEL";
+                conexao.className = "ligado";
+
+                document.getElementById("ultimaAtualizacao").textContent =
+                    "Consulta: " +
+                    new Date().toLocaleTimeString("pt-BR");
+
+
+                // Consulta o histórico de eventos
+                const respostaHistorico = await fetch(
+                    "/api/historico",
+                    { cache: "no-store" }
+                );
+
+                if (!respostaHistorico.ok) {
+                    throw new Error("Falha ao consultar histórico");
+                }
+
+                const eventos = await respostaHistorico.json();
+
+                atualizarGrafico(eventos);
+                atualizarTabela(eventos);
+
+            } catch (erro) {
+
+                console.error("Erro no Dashboard:", erro);
+
+                const conexao = document.getElementById("conexao");
+
+                conexao.textContent = "SEM CONEXÃO";
+                conexao.className = "desligado";
+
+                document.getElementById("ultimaAtualizacao").textContent =
+                    "Não foi possível consultar o servidor.";
+
+            }
+
+        }
+
+
+        // Atualiza o gráfico utilizando o tempo real
+        function atualizarGrafico(eventos) {
+
+            const agora = Date.now();
+
+            const inicio = agora - (24 * 60 * 60 * 1000);
+
+            // Converte os eventos para timestamps numéricos
+            const eventosValidos = eventos
+
+                .map(evento => {
+
+                    return {
+                        horario: new Date(evento.timestamp).getTime(),
+
+                        estado:
+                            evento.estado === "BAT_SIGNAL_ON" ? 1 : 0
+                    };
+
+                })
+
+                .filter(evento =>
+                    Number.isFinite(evento.horario) &&
+                    evento.horario <= agora
+                )
+
+                .sort((a, b) => a.horario - b.horario);
+
+
+            const pontos = [];
+
+            // Separa os eventos anteriores e posteriores
+            // ao início das últimas 24 horas
+            const anteriores = eventosValidos.filter(
+                evento => evento.horario < inicio
+            );
+
+            const posteriores = eventosValidos.filter(
+                evento => evento.horario >= inicio
+            );
+
+
+            // Recupera o estado que já estava ativo
+            // no início das últimas 24 horas
+            if (anteriores.length > 0) {
+
+                pontos.push({
+                    x: inicio,
+                    y: anteriores[anteriores.length - 1].estado
+                });
+
+            }
+
+
+            // Adiciona as mudanças ocorridas nas últimas 24 horas
+            posteriores.forEach(evento => {
+
+                pontos.push({
+                    x: evento.horario,
+                    y: evento.estado
+                });
+
+            });
+
+
+            // Prolonga o último estado até o horário atual
+            if (pontos.length > 0) {
+
+                pontos.push({
+                    x: agora,
+                    y: pontos[pontos.length - 1].y
+                });
+
+            }
+
+
+            // Cria o gráfico na primeira atualização
+            if (!grafico) {
+
+                const contexto = document
+                    .getElementById("grafico")
+                    .getContext("2d");
+
+
+                grafico = new Chart(contexto, {
+
+                    type: "line",
+
+                    data: {
+
+                        datasets: [{
+
+                            label: "Estado do Bat-Sinal",
+
+                            data: pontos,
+
+                            borderColor: "#facc15",
+
+                            backgroundColor:
+                                "rgba(250, 204, 21, 0.12)",
+
+                            fill: true,
+
+                            stepped: "after",
+
+                            pointRadius: 2,
+
+                            pointHoverRadius: 6,
+
+                            tension: 0
+
+                        }]
+
+                    },
+
+                    options: {
+
+                        responsive: true,
+
+                        maintainAspectRatio: false,
+
+                        parsing: false,
+
+                        scales: {
+
+                            x: {
+
+                                type: "linear",
+
+                                min: inicio,
+
+                                max: agora,
+
+                                title: {
+
+                                    display: true,
+
+                                    text: "Tempo (últimas 24 horas)",
+
+                                    color: "#cbd5e1"
+
+                                },
+
+                                ticks: {
+
+                                    color: "#cbd5e1",
+
+                                    callback: valor => {
+
+                                        return new Date(valor)
+                                            .toLocaleTimeString("pt-BR");
+
+                                    }
+
+                                },
+
+                                grid: {
+
+                                    color: "#303b4d"
+
+                                }
+
+                            },
+
+                            y: {
+
+                                min: 0,
+
+                                max: 1,
+
+                                ticks: {
+
+                                    stepSize: 1,
+
+                                    callback: valor => {
+
+                                        if (valor === 1) {
+                                            return "LIGADO";
+                                        }
+
+                                        if (valor === 0) {
+                                            return "DESLIGADO";
+                                        }
+
+                                        return "";
+
+                                    },
+
+                                    color: "#cbd5e1"
+
+                                },
+
+                                grid: {
+
+                                    color: "#303b4d"
+
+                                }
+
+                            }
+
+                        },
+
+                        plugins: {
+
+                            legend: {
+
+                                labels: {
+
+                                    color: "#f1f5f9"
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                });
+
+            } else {
+
+                // Atualiza os dados sem recriar o gráfico
+                grafico.data.datasets[0].data = pontos;
+
+                grafico.options.scales.x.min = inicio;
+
+                grafico.options.scales.x.max = agora;
+
+                grafico.update();
+
+            }
+
+        }
+
+
+        // Atualiza a tabela de eventos
+        function atualizarTabela(eventos) {
+
+            const tabela = document.getElementById("eventos");
+
+            tabela.innerHTML = "";
+
+            const limite = Date.now() - (24 * 60 * 60 * 1000);
+
+            // Mostra somente os eventos das últimas 24 horas
+            const recentes = eventos
+
+                .filter(evento =>
+                    new Date(evento.timestamp).getTime() >= limite
+                )
+
+                .slice(-10)
+
+                .reverse();
+
+
+            if (recentes.length === 0) {
+
+                tabela.innerHTML =
+                    '<tr><td colspan="2">Nenhum evento nas últimas 24 horas.</td></tr>';
+
+                return;
+
+            }
+
+
+            recentes.forEach(evento => {
+
+                const linha = document.createElement("tr");
+
+                const estado = document.createElement("td");
+
+                estado.textContent =
+                    evento.estado === "BAT_SIGNAL_ON"
+                        ? "LIGADO"
+                        : "DESLIGADO";
+
+                estado.className =
+                    evento.estado === "BAT_SIGNAL_ON"
+                        ? "ligado"
+                        : "desligado";
+
+
+                const data = document.createElement("td");
+
+                data.textContent = formatarData(evento.timestamp);
+
+                linha.appendChild(estado);
+
+                linha.appendChild(data);
+
+                tabela.appendChild(linha);
+
+            });
+
+        }
+
+
+        // Primeira atualização
+        atualizarDashboard();
+
+
+        // Atualiza o Dashboard a cada 3 segundos
+        setInterval(atualizarDashboard, 3000);
+
+    </script>
+
+</body>
+
+</html>
